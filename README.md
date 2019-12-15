@@ -1,0 +1,5 @@
+- sudo apt-get install python-setuptools
+- install requirements
+    - pytorch
+    - (tensorflow)
+    - transformers
