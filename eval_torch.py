@@ -13,7 +13,6 @@ import numpy as np
 
 # parameters which can be adjusted
 version_number = 1
-bert_filename = "epoch_7-loss_1.3774007009832483.pt"
 bert_filename = ""
 
 

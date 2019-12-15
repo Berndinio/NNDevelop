@@ -29,10 +29,10 @@ mkdir("model_saves/v" + str(next_save_path))
 parameters = {
     "batch_size": 6,
     "num_labels": 5,
-    "num_epochs": 20,
-    "lr_classifier": 0.001,
+    "num_epochs": 100,
+    "lr_classifier": 0.0001,
     "lr_bert": 0.00001,
-    "dataset_scaling": 0.001
+    "dataset_scaling": 0.01
 }
 pickle.dump(parameters, open("model_saves/v" + str(next_save_path) + "/parameters.pkl", 'wb'))
 
@@ -56,7 +56,7 @@ optimizer = optim.Adam(
         {"params": model.classifier.parameters(), "lr": parameters["lr_classifier"]},
     ])
 criterion = nn.CrossEntropyLoss()
-lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
+lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 
 print("Training dataset length: ", len(train_loader))
 print("Testing dataset length: ", len(test_loader))
@@ -110,4 +110,6 @@ for epoch in range(parameters["num_epochs"]):
                 all_losses[1][-1]) + ".pt")
 
     # lr decay
-    lr_scheduler.step()
+    if epoch < 31:
+        lr_scheduler.step()
+
