@@ -7,6 +7,7 @@
 # https://nijianmo.github.io/amazon/index.html
 # Vielleicht Vergleich BERT-ELMO?
 
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -18,6 +19,8 @@ from amazonDatasetV2 import AmazonDataset
 from os import path, mkdir
 import pickle
 from get_model import build_model
+from sklearn.metrics import roc_auc_score
+
 
 # create directory automatically
 next_save_path = 0
@@ -54,7 +57,9 @@ optimizer = optim.Adam(
     [
         {"params": model.bert.parameters(), "lr": parameters["lr_bert"]},
         {"params": model.classifier.parameters(), "lr": parameters["lr_classifier"]},
-    ])
+    ],
+    weight_decay=0.01
+)
 criterion = nn.CrossEntropyLoss()
 lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 
@@ -62,7 +67,7 @@ print("Training dataset length: ", len(train_loader))
 print("Testing dataset length: ", len(test_loader))
 
 # open losses pickle file
-all_losses = [[], [], []]
+all_losses = [[], [], [], []]
 for epoch in range(parameters["num_epochs"]):
     # train
     running_loss = 0.0
@@ -90,6 +95,7 @@ for epoch in range(parameters["num_epochs"]):
 
     # test
     running_loss = 0.0
+    auc_roc_output, auc_roc_target = None, None
     laenge = len(test_loader)
     for i, (target, net_input) in enumerate(test_loader):
         print(str(i / float(laenge) * 100.0) + "              ", end="\r")
@@ -100,7 +106,16 @@ for epoch in range(parameters["num_epochs"]):
         loss = criterion(output, target)
         # print statistics
         running_loss += loss.item()
+        # roc-auc-score
+        if auc_roc_target is None:
+            auc_roc_output, auc_roc_target = output.cpu().detach().numpy(), target.cpu().detach().numpy()
+        else:
+            auc_roc_output = np.concatenate((auc_roc_output, output.cpu().detach().numpy()), axis=0)
+            auc_roc_target = np.concatenate((auc_roc_target, target.cpu().detach().numpy()), axis=0)
     all_losses[1].append(running_loss / (len(test_loader) * parameters["batch_size"]))
+    all_losses[2].append(((np.argmax(auc_roc_output, axis=1) == auc_roc_target).sum()/auc_roc_target.shape[0])*100.0)
+    all_losses[3].append(roc_auc_score(auc_roc_target, auc_roc_output, average="weighted", multi_class="ovo"))
+
     pickle.dump(all_losses, open("model_saves/v" + str(next_save_path) + "/losses.pkl", 'wb'))
     print("\n")
     # noinspection PyUnboundLocalVariable

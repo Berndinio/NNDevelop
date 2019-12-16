@@ -32,6 +32,7 @@ if bert_filename == "":
     f = sorted(f)
     # use all elements
     berts_to_load = ["model_saves/v" + str(version_number) + "/" + x for x in f][:-2]
+    berts_to_load.reverse()
     print(berts_to_load)
 else:
     berts_to_load = ["model_saves/v" + str(version_number) + "/" + bert_filename]
