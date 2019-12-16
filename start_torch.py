@@ -61,7 +61,7 @@ optimizer = optim.Adam(
     weight_decay=0.01
 )
 criterion = nn.CrossEntropyLoss()
-lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.5)
+lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.5)
 
 print("Training dataset length: ", len(train_loader))
 print("Testing dataset length: ", len(test_loader))
@@ -130,6 +130,6 @@ for epoch in range(parameters["num_epochs"]):
                 all_losses[1][-1]) + ".pt")
 
     # lr decay
-    if epoch < 16:
+    if epoch < 50:
         lr_scheduler.step()
 
