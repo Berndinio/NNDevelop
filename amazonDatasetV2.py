@@ -15,6 +15,9 @@ class AmazonDataset(Dataset):
         # calculate dataset indices - train - test - validation
         # dataset is not ordered anyway, so we just can take the first scaling*originalLength
         self.dataset_length = int(len(h5_file.root.data)*scaling)
+        # these values cut them 70% train, 20% test, 10% validation
+        # the strange scalers come from the equal distribution of the class which is done afterwards, so we do not have
+        # to load the whole dataset from the h5f file
         self.cuts = [int(0.0*self.dataset_length),
                      int(0.7*self.dataset_length),
                      int(0.9*self.dataset_length),

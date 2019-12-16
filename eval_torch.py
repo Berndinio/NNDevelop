@@ -19,7 +19,7 @@ bert_filename = ""
 print("Loading parameters at: " + "model_saves/v" + str(version_number) + "/losses.pkl")
 losses = pickle.load(open("model_saves/v" + str(version_number) + "/losses.pkl", 'rb'))
 print(losses)
-asdasd
+
 # begin loading parameters
 print("Loading parameters at: " + "model_saves/v" + str(version_number) + "/parameters.pkl")
 parameters = pickle.load(open("model_saves/v" + str(version_number) + "/parameters.pkl", 'rb'))
@@ -52,18 +52,17 @@ valid_loader = DataLoader(
 print("Finished Loading Validation Data...")
 
 
-
 for bert_to_load in berts_to_load:
-    # replace the classification layer
+    # load the model
     model = build_model(parameters)
+    model.load_state_dict(torch.load(bert_to_load))
 
     # test
     laenge = len(test_loader)
     criterion = nn.CrossEntropyLoss()
-    # for one-hot encoding
+    # for saving test vectors
     auc_roc_output, auc_roc_target = None, None
-
-    # [<cross-entropy-loss>, <auc-roc-score>, <precent of True-positive>]
+    # [<cross-entropy-loss>, <precent of True-positive>, <auc-roc-score>]
     stats = [0.0, 0.0, 0.0]
     # begin testing
     for i, (target, net_input) in enumerate(test_loader):
@@ -81,10 +80,11 @@ for bert_to_load in berts_to_load:
             auc_roc_output = np.concatenate((auc_roc_output, output.cpu().detach().numpy()), axis=0)
             auc_roc_target = np.concatenate((auc_roc_target, target.cpu().detach().numpy()), axis=0)
 
-    # scale stats data
-    stats[0] /= (len(test_loader) * parameters["batch_size"])
-    stats[1] = roc_auc_score(auc_roc_target, auc_roc_output, average="weighted", multi_class="ovo")
-    stats[2] = ((np.argmax(auc_roc_output, axis=1) == auc_roc_target).sum()/auc_roc_target.shape[0])*100.0
+    # get stats data
+    stats[0] = stats[0] / (len(test_loader) * parameters["batch_size"])
+    stats[1] = ((np.argmax(auc_roc_output, axis=1) == auc_roc_target).sum()/auc_roc_target.shape[0])*100.0
+    stats[2] = roc_auc_score(auc_roc_target, auc_roc_output, average="weighted", multi_class="ovo")
+
     # print results
     print("Bert: ", bert_to_load)
     print("Test stat results: ", stats)
