@@ -12,10 +12,14 @@ from get_model import build_model
 import numpy as np
 
 # parameters which can be adjusted
-version_number = 1
+version_number = 0
 bert_filename = ""
 
-
+# just print the losses from training
+print("Loading parameters at: " + "model_saves/v" + str(version_number) + "/losses.pkl")
+losses = pickle.load(open("model_saves/v" + str(version_number) + "/losses.pkl", 'rb'))
+print(losses)
+asdasd
 # begin loading parameters
 print("Loading parameters at: " + "model_saves/v" + str(version_number) + "/parameters.pkl")
 parameters = pickle.load(open("model_saves/v" + str(version_number) + "/parameters.pkl", 'rb'))

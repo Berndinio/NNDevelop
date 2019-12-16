@@ -10,7 +10,9 @@ def build_model(parameters):
 
     # replace classifier with linear + softmax along axis 1
     model.classifier = nn.Sequential(
-            nn.Linear(model.config.hidden_size, parameters["num_labels"]), nn.Softmax(1)
+            #nn.Linear(model.config.hidden_size, model.config.hidden_size),
+            nn.Linear(model.config.hidden_size, parameters["num_labels"]),
+            nn.Softmax(1)
         ).to(Constants.device)
 
     # update parameters

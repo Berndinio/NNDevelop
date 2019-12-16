@@ -20,7 +20,7 @@ from os import path, mkdir
 import pickle
 from get_model import build_model
 from sklearn.metrics import roc_auc_score
-
+import torch.nn.functional as F
 
 # create directory automatically
 next_save_path = 0
@@ -33,7 +33,7 @@ parameters = {
     "batch_size": 6,
     "num_labels": 5,
     "num_epochs": 100,
-    "lr_classifier": 0.0001,
+    "lr_classifier": 0.001,
     "lr_bert": 0.00001,
     "dataset_scaling": 0.01
 }
@@ -61,7 +61,7 @@ optimizer = optim.Adam(
     weight_decay=0.01
 )
 criterion = nn.CrossEntropyLoss()
-lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.5)
 
 print("Training dataset length: ", len(train_loader))
 print("Testing dataset length: ", len(test_loader))
@@ -89,6 +89,7 @@ for epoch in range(parameters["num_epochs"]):
         if (int(len(train_loader) / 10)) == 0 or ((i + 1) % int(len(train_loader) / 10)) == 0:
             print('[%d, %5d] Training loss: %.3f' %
                   (epoch + 1, i + 1, running_loss / ((i + 1)*parameters["batch_size"])))
+    print(output, target)
     all_losses[0].append(running_loss / (len(train_loader) * parameters["batch_size"]))
     pickle.dump(all_losses, open("model_saves/v" + str(next_save_path) + "/losses.pkl", 'wb'))
     print("\n")
@@ -113,18 +114,22 @@ for epoch in range(parameters["num_epochs"]):
             auc_roc_output = np.concatenate((auc_roc_output, output.cpu().detach().numpy()), axis=0)
             auc_roc_target = np.concatenate((auc_roc_target, target.cpu().detach().numpy()), axis=0)
     all_losses[1].append(running_loss / (len(test_loader) * parameters["batch_size"]))
+    print(auc_roc_output)
+    print(np.argmax(auc_roc_output, axis=1))
+    print(auc_roc_target)
+    print(np.argmax(auc_roc_output, axis=1) == auc_roc_target)
     all_losses[2].append(((np.argmax(auc_roc_output, axis=1) == auc_roc_target).sum()/auc_roc_target.shape[0])*100.0)
     all_losses[3].append(roc_auc_score(auc_roc_target, auc_roc_output, average="weighted", multi_class="ovo"))
 
     pickle.dump(all_losses, open("model_saves/v" + str(next_save_path) + "/losses.pkl", 'wb'))
     print("\n")
     # noinspection PyUnboundLocalVariable
-    print('[%d, %5d] Test loss: %.3f' % (epoch + 1, i + 1, all_losses[1][-1]))
+    print("Losses: ", all_losses)
     torch.save(model.state_dict(),
                "model_saves/v" + str(next_save_path) + "/epoch_" + str(epoch).zfill(3) + "-loss_" + str(
                 all_losses[1][-1]) + ".pt")
 
     # lr decay
-    if epoch < 31:
+    if epoch < 16:
         lr_scheduler.step()
 
