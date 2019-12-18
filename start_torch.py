@@ -38,17 +38,18 @@ def main_train_loop(continue_training=None):
         # some variables
         parameters = {
             "batch_size": 6,
-            "num_labels": 5,
+            "dataset_scaling": 0.1,
+
+            "num_labels": 3,
             "lr_classifier": 0.001,
             "lr_bert": 0.00001,
-            "dataset_scaling": 0.001,
-
-            "scheduler_stepsize": 5,
-            "scheduler_gamma": 5,
             "weight_decay": 0.01,
 
-            "next_epoch": 0,
-            "scheduler_max_epoch": 31
+            "scheduler_stepsize": 5,
+            "scheduler_gamma": 0.5,
+            "scheduler_max_epoch": 31,
+
+            "next_epoch": 0
         }
         pickle.dump(parameters, open("model_saves/v" + str(next_save_path) + "/parameters.pkl", 'wb'))
         # create variable for losses

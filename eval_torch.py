@@ -12,7 +12,7 @@ from get_model import build_model
 import numpy as np
 
 # parameters which can be adjusted
-version_number = 0
+version_number = 3
 bert_filename = ""
 
 # just print the losses from training
