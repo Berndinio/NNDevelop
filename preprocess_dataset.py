@@ -35,38 +35,23 @@ def get_dataset_length(f_name):
 
 
 def get_dataset_idx(idx, return_dict, semaphore, max_input_length=ROW_SIZE):
-    if True:
-        line = get_dataset_idx_file_lines[idx]
-        # start parsing
-        json_object = json.loads(line)
-        keys = json_object.keys()
-        if "overall" in keys and "reviewText" in keys:
-            # text tokenization
-            tokenized = utils_bert_tokenizer.tokenize(json_object["reviewText"])
-            # handle too long reviews
-            if len(tokenized) > max_input_length - 2:
-                tokenized = tokenized[:max_input_length - 2]
-            # PAD the things
-            tokenized += ["[PAD]"] * (max_input_length - 2 - len(tokenized))
-            # here are start and end appended
-            text = utils_bert_tokenizer.encode(tokenized)
-            text = torch.LongTensor(text)
-            # one hot labels
-            label = int(json_object["overall"]) - 1
-            # try to catch error
-            if label is None:
-                label = 1
-            if text is None:
-                text = [101]
-                text += [0] * (max_input_length - 2)
-                text += [102]
-            # put all together
-            yield_value = np.concatenate(([label], text), 0)[None, :]
-            return_dict[str(idx)] = yield_value
-        else:
-            return_dict[str(idx)] = None
-        semaphore.release()
-        return
+    line = get_dataset_idx_file_lines[idx]
+    # start parsing
+    json_object = json.loads(line)
+    keys = json_object.keys()
+    if "overall" in keys and "reviewText" in keys:
+        # text tokenization
+        text = utils_bert_tokenizer.encode(json_object["reviewText"],
+                                           add_special_tokens=True, max_length=max_input_length, pad_to_max_length=True)
+        # labels
+        label = int(json_object["overall"]) - 1
+        # put all together
+        yield_value = np.concatenate(([label], text), 0)[None, :]
+        return_dict[str(idx)] = yield_value
+    else:
+        return_dict[str(idx)] = None
+    semaphore.release()
+    return
 
 
 d_length = get_dataset_length("data/Cell_Phones_and_Accessories_5.json")
@@ -106,7 +91,7 @@ while walk_idx < d_length - 1:
     gc.enable()
 
     print(str(walk_idx / float(d_length) * 100.0) + "%              " + str(
-        time.time() - start_time) + "                      ")  # , end="\r")
+        time.time() - start_time) + "                      ")
 
 # transform to torch
 final_mat = h5_file.root.data

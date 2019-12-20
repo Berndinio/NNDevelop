@@ -9,7 +9,7 @@ class AmazonDataset(Dataset):
     Highly optimized version of the amazonDatasetV1
     '''
 
-    def __init__(self, filename, scaling=1.0, mode=0, map=True):
+    def __init__(self, filename, scaling=1.0, mode=0, p_map=False):
         # get tokenized strings
         h5_file = tables.open_file(filename, mode='r')
 
@@ -27,7 +27,7 @@ class AmazonDataset(Dataset):
         # noinspection PyArgumentList
         data = h5_file.root.data[self.cuts[mode]:self.cuts[mode + 1]]
         # conclude classes
-        if map:
+        if p_map:
             data[:, 0] = np.where(data[:, 0] == 1, 0, data[:, 0])
             data[:, 0] = np.where(data[:, 0] == 2, 1, data[:, 0])
             data[:, 0] = np.where(data[:, 0] == 3, 2, data[:, 0])

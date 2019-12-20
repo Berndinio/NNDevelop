@@ -12,13 +12,13 @@ version_number = args.number[0]
 bert_filename = ""
 
 # just print the losses from training
-losses = pickle.load(open("model_saves/v" + str(version_number) + "/losses.pkl", 'rb'))
+losses = pickle.load(open("model_saves/wrong-dataset/v" + str(version_number) + "/losses.pkl", 'rb'))
 for loss in losses:
-    #print(loss)
+    print(loss)
     pass
 
 # begin loading parameters
-print("Loading parameters at: " + "model_saves/v" + str(version_number) + "/parameters.pkl")
-parameters = pickle.load(open("model_saves/v" + str(version_number) + "/parameters.pkl", 'rb'))
+print("Loading parameters at: " + "model_saves/wrong-dataset/v" + str(version_number) + "/parameters.pkl")
+parameters = pickle.load(open("model_saves/wrong-dataset/v" + str(version_number) + "/parameters.pkl", 'rb'))
 print(parameters)
 

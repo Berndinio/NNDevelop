@@ -38,9 +38,9 @@ def main_train_loop(continue_training=None):
         # some variables
         parameters = {
             "batch_size": 6,
-            "dataset_scaling": 0.1,
+            "dataset_scaling": 0.01,
 
-            "num_labels": 3,
+            "num_labels": 5,
             "lr_classifier": 0.001,
             "lr_bert": 0.00001,
             "weight_decay": 0.01,

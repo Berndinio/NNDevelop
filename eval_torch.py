@@ -12,7 +12,7 @@ from get_model import build_model
 import numpy as np
 
 # parameters which can be adjusted
-version_number = 3
+version_number = 0
 bert_filename = ""
 
 # just print the losses from training
@@ -36,7 +36,7 @@ if bert_filename == "":
     f = sorted(f)
     # use all elements
     berts_to_load = ["model_saves/v" + str(version_number) + "/" + x for x in f][:-2]
-    berts_to_load.reverse()
+    # berts_to_load.reverse()
     print(berts_to_load)
 else:
     berts_to_load = ["model_saves/v" + str(version_number) + "/" + bert_filename]
@@ -54,8 +54,8 @@ print("Finished Loading Validation Data...")
 
 for bert_to_load in berts_to_load:
     # load the model
-    model = build_model(parameters)
-    model.load_state_dict(torch.load(bert_to_load))
+    model = build_model(parameters).to(Constants.device)
+    model.load_state_dict(torch.load(bert_to_load, map_location=Constants.device))
 
     # test
     laenge = len(test_loader)
@@ -63,9 +63,10 @@ for bert_to_load in berts_to_load:
     # for saving test vectors
     auc_roc_output, auc_roc_target = None, None
     # [<cross-entropy-loss>, <precent of True-positive>, <auc-roc-score>]
-    stats = [0.0, 0.0, 0.0]
+    stats = [0.0, 0.0, 0.0, 0.0]
     # begin testing
     for i, (target, net_input) in enumerate(test_loader):
+        print(net_input)
         print(str(i / float(laenge) * 100.0) + "              ", end="\r")
         model.eval()
         target, net_input = target.to(Constants.device), net_input.to(Constants.device)
@@ -79,11 +80,14 @@ for bert_to_load in berts_to_load:
         else:
             auc_roc_output = np.concatenate((auc_roc_output, output.cpu().detach().numpy()), axis=0)
             auc_roc_target = np.concatenate((auc_roc_target, target.cpu().detach().numpy()), axis=0)
-
     # get stats data
     stats[0] = stats[0] / (len(test_loader) * parameters["batch_size"])
-    stats[1] = ((np.argmax(auc_roc_output, axis=1) == auc_roc_target).sum()/auc_roc_target.shape[0])*100.0
-    stats[2] = roc_auc_score(auc_roc_target, auc_roc_output, average="weighted", multi_class="ovo")
+    stats[1] = roc_auc_score(auc_roc_target, auc_roc_output, average="weighted", multi_class="ovo")
+    prediction = np.argmax(auc_roc_output, axis=1)
+    stats[2] = ((prediction == auc_roc_target).sum()/auc_roc_target.shape[0])*100.0
+    stats[3] = ((((prediction == auc_roc_target) + (prediction == auc_roc_target+1) + (prediction == auc_roc_target-1)) >= 1).sum()
+                /auc_roc_target.shape[0]
+               )*100.0
 
     # print results
     print("Bert: ", bert_to_load)
