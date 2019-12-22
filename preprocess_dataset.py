@@ -42,12 +42,18 @@ def get_dataset_idx(idx, return_dict, semaphore, max_input_length=ROW_SIZE):
     if "overall" in keys and "reviewText" in keys:
         # text tokenization
         text = utils_bert_tokenizer.encode(json_object["reviewText"],
-                                           add_special_tokens=True, max_length=max_input_length, pad_to_max_length=True)
-        # labels
-        label = int(json_object["overall"]) - 1
-        # put all together
-        yield_value = np.concatenate(([label], text), 0)[None, :]
-        return_dict[str(idx)] = yield_value
+                                           add_special_tokens=True, max_length=max_input_length, pad_to_max_length=False)
+        if len(text) < 100:
+            return_dict[str(idx)] = None
+        else:
+            text = utils_bert_tokenizer.encode(json_object["reviewText"],
+                                               add_special_tokens=True, max_length=max_input_length,
+                                               pad_to_max_length=True)
+            # labels
+            label = int(json_object["overall"]) - 1
+            # put all together
+            yield_value = np.concatenate(([label], text), 0)[None, :]
+            return_dict[str(idx)] = yield_value
     else:
         return_dict[str(idx)] = None
     semaphore.release()
@@ -83,15 +89,23 @@ while walk_idx < d_length - 1:
         j.terminate()
     # get results, append them to h5 file and clear dict
     gc.disable()
+    counter = 0
     for key in return_dic.keys():
         ret = return_dic[key]
         if ret is not None:
+            counter += 1
             h5_file.root.data.append(return_dic[key])
     return_dic.clear()
     gc.enable()
 
-    print(str(walk_idx / float(d_length) * 100.0) + "%              " + str(
-        time.time() - start_time) + "                      ")
+    print(str(walk_idx / float(d_length) * 100.0) + "%              " +
+          str(time.time() - start_time) + "                      " +
+          str(counter) + "appended                      "
+    )
+
+print("saving")
+utils_bert_tokenizer.save_pretrained("data/new_tokenizer/")
+print(utils_bert_tokenizer.from_pretrained("data/new_tokenizer/"))
 
 # transform to torch
 final_mat = h5_file.root.data

@@ -9,7 +9,7 @@ class AmazonDataset(Dataset):
     Highly optimized version of the amazonDatasetV1
     '''
 
-    def __init__(self, filename, scaling=1.0, mode=0, p_map=False):
+    def __init__(self, filename, scaling=1.0, mode=0, p_map=True):
         # get tokenized strings
         h5_file = tables.open_file(filename, mode='r')
 

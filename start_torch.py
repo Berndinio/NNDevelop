@@ -22,6 +22,7 @@ from amazonDatasetV2 import AmazonDataset
 from constants import Constants
 from get_model import build_model
 from torch.optim import lr_scheduler as torch_lr_scheduler
+from transformers import *
 
 
 # None = plain from beginning
@@ -77,6 +78,7 @@ def main_train_loop(continue_training=None):
         # load the last/latest model
         model = build_model(parameters)
         model.load_state_dict(torch.load(berts_to_load[-1]))
+        model.output_attentions = True
         print("Loading Bert model \n", berts_to_load[-1])
 
     print("Beginning with parameters: \n", parameters)
@@ -96,20 +98,21 @@ def main_train_loop(continue_training=None):
 
     # load the raw dataset
     train_loader = DataLoader(
-        dataset=AmazonDataset("data/Cell_Phones_and_Accessories_5_preprocessed.h5", parameters["dataset_scaling"], 0),
+        dataset=AmazonDataset("data/Cell_Phones_and_Accessories_5_preprocessed.h5", parameters["dataset_scaling"], 0, parameters["num_labels"] < 5),
         batch_size=parameters["batch_size"], shuffle=True, num_workers=8)
     print("Finished Loading Training Data...")
     test_loader = DataLoader(
-        dataset=AmazonDataset("data/Cell_Phones_and_Accessories_5_preprocessed.h5", parameters["dataset_scaling"], 1),
+        dataset=AmazonDataset("data/Cell_Phones_and_Accessories_5_preprocessed.h5", parameters["dataset_scaling"], 1, parameters["num_labels"] < 5),
         batch_size=parameters["batch_size"], shuffle=False, num_workers=8)
     print("Finished Loading Testing Data...")
     validation_loader = DataLoader(
-        dataset=AmazonDataset("data/Cell_Phones_and_Accessories_5_preprocessed.h5", parameters["dataset_scaling"], 2),
+        dataset=AmazonDataset("data/Cell_Phones_and_Accessories_5_preprocessed.h5", parameters["dataset_scaling"], 2, parameters["num_labels"] < 5),
         batch_size=parameters["batch_size"], shuffle=False, num_workers=8)
-    print("Finished Loading Testing Data...")
+    print("Finished Loading Validation Data...")
     print("Training dataset length: ", len(train_loader))
     print("Testing dataset length: ", len(test_loader))
-    print("Testing dataset length: ", len(validation_loader))
+    print("Validation dataset length: ", len(validation_loader))
+    bert_tokenizer = BertTokenizer.from_pretrained('data/new_tokenizer')
 
     # open losses pickle file
     for epoch in range(parameters["next_epoch"], 10000):
@@ -123,7 +126,7 @@ def main_train_loop(continue_training=None):
             # zero the parameter gradients
             optimizer.zero_grad()
             # forward + backward + optimize
-            output = model(net_input)[0]
+            output, attentions = model(net_input)
             loss = criterion(output, target)
             loss.backward()
             optimizer.step()
@@ -146,7 +149,7 @@ def main_train_loop(continue_training=None):
             target, net_input = target.to(Constants.device), net_input.to(Constants.device)
             model.eval()
             # forward + backward + optimize
-            output = model(net_input)[0]
+            output, attentions = model(net_input)
             loss = criterion(output, target)
             # print statistics
             running_loss += loss.item()
