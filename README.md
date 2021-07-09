@@ -12,7 +12,7 @@ we specialized to the Cell Phones and Accessories data, which contains 10 millio
 [NLM19]
 
 ## Report
-Report in Seminar_NNDevelop.pdf . Sadly pdf24 removes the pdf Links within the document.
+Report in Seminar_NNDevelop.pdf.
 
 ## Install
 - sudo apt-get install python-setuptools
